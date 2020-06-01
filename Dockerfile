@@ -14,37 +14,17 @@ WORKDIR $GOPATH
 RUN cd src && git clone https://github.com/tektoncd/experimental && cd experimental/octant-plugin && \
     CGO_ENABLED=0 GOOS=linux go build -o $GOPATH/src/tekton-plugin -a -ldflags '-extldflags "-static"' .
 
-FROM quay.io/buildah/stable:v1.14.8
+FROM quay.io/eclipse/che-sidecar-kubernetes-tooling:1.2.0-cbde020
 
-ENV KUBECTL_VERSION v1.18.3
-ENV HELM_VERSION v3.2.1
 ENV OCTANT_VERSION 0.12.1
-ENV HOME=/home/theia
 
-ADD etc/storage.conf $HOME/.config/containers/storage.conf
-
-RUN mkdir /projects && \
-    # Change permissions to let any arbitrary user
-    for f in "${HOME}" "/etc/passwd" "/projects"; do \
-      echo "Changing permissions on ${f}" && chgrp -R 0 ${f} && \
-      chmod -R g+rwX ${f}; \
-    done && \
-    # buildah login requires writing to /run
-    chgrp -R 0 /run && chmod -R g+rwX /run && \
-    curl https://storage.googleapis.com/kubernetes-release/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl && \
-    chmod +x /usr/local/bin/kubectl && \
-    curl -o- -L https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz | tar xvz -C /usr/local/bin --strip 1 && \
-    # 'which' utility is used by VS Code Kubernetes extension to find the binaries, e.g. 'kubectl'
-    dnf install -y file wget which nodejs dnf-plugins-core java-11-openjdk.x86_64 && \
+RUN dnf install -y wget dnf-plugins-core && \
     dnf copr enable -y chmouel/tektoncd-cli && \
     dnf install -y tektoncd-cli && mkdir -p /home/theia/.octant/plugins && \
     wget https://github.com/vmware-tanzu/octant/releases/download/v${OCTANT_VERSION}/octant_${OCTANT_VERSION}_Linux-64bit.tar.gz && \
     tar -zxvf octant_${OCTANT_VERSION}_Linux-64bit.tar.gz && cd octant_${OCTANT_VERSION}_Linux-64bit && cp octant /usr/local/bin/
     
-ADD etc/entrypoint.sh /entrypoint.sh
 RUN mkdir -p /home/theia/.octant/plugins
 COPY --from=builder /go/src/tekton-plugin /home/theia/.octant/plugins/
 RUN chgrp -R 0 /home/theia/.octant && chmod -R g+rwX /home/theia/.octant
 RUN chown -R 1724:root /home/theia/.octant
-ENTRYPOINT [ "/entrypoint.sh" ]
-CMD ${PLUGIN_REMOTE_ENDPOINT_EXECUTABLE}

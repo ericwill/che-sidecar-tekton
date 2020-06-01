@@ -1,7 +1,7 @@
 # che-sidecar-tekton
 Eclipse Che Sidecar container for TekTon tooling
 
-This sidecar image is used to run Che Plug-ins in dedicated containers
+This sidecar image is used to run Che Plug-ins in dedicated containers, and is based on the [che-sidecar-kubernetes-tooling](hhttps://github.com/che-dockerfiles/che-sidecar-kubernetes-tooling/blob/master/Dockerfile) image.
 
 # Dockerfiles
 
