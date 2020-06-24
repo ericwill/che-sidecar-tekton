@@ -17,12 +17,16 @@ RUN cd src && git clone https://github.com/tektoncd/experimental && cd experimen
 FROM quay.io/eclipse/che-sidecar-kubernetes-tooling:1.2.0-cbde020
 
 ENV OCTANT_VERSION 0.12.1
+ENV TEKTONCD_VERSION 0.9.0
 
-RUN dnf install -y wget dnf-plugins-core && \
-    dnf copr enable -y chmouel/tektoncd-cli && \
-    dnf install -y tektoncd-cli && mkdir -p /home/theia/.octant/plugins && \
+RUN dnf install -y wget && \
+    mkdir -p /home/theia/.octant/plugins && \
     wget https://github.com/vmware-tanzu/octant/releases/download/v${OCTANT_VERSION}/octant_${OCTANT_VERSION}_Linux-64bit.tar.gz && \
-    tar -zxvf octant_${OCTANT_VERSION}_Linux-64bit.tar.gz && cd octant_${OCTANT_VERSION}_Linux-64bit && cp octant /usr/local/bin/
+    tar -zxvf octant_${OCTANT_VERSION}_Linux-64bit.tar.gz && cd octant_${OCTANT_VERSION}_Linux-64bit && cp octant /usr/local/bin/ && \
+    wget https://github.com/tektoncd/cli/releases/download/v${TEKTONCD_VERSION}/tkn_${TEKTONCD_VERSION}_Linux_x86_64.tar.gz  && \
+    tar xvzf tkn_${TEKTONCD_VERSION}_Linux_x86_64.tar.gz -C /usr/local/bin/ tkn && \
+    rm tkn_${TEKTONCD_VERSION}_Linux_x86_64.tar.gz
+
     
 RUN mkdir -p /home/theia/.octant/plugins
 COPY --from=builder /go/src/tekton-plugin /home/theia/.octant/plugins/
